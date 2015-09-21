@@ -30,6 +30,7 @@ openerp.web_environment_ribbon = function(instance) {
             if (result.length) {
                 ribbon.html(result[0].value);
                 ribbon.show();
+                $('link[rel="shortcut icon"]').attr('href', '/web_environment_ribbon/static/src/img/favicon.ico');
             }
         }
     );
