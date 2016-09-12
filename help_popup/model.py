@@ -3,6 +3,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 
 from openerp import _, api, models, fields
+from openerp.exceptions import Warning as UserError
+from BeautifulSoup import BeautifulSoup as BSHTML
 
 
 class ErpHelp(models.AbstractModel):
@@ -16,6 +18,13 @@ class ErpHelp(models.AbstractModel):
         string="Advanced Help", groups='base.group_no_one',
         help="Use this field to add custom content for documentation purpose\n"
              "mainly by developers or consultants")
+
+    # @api.multi
+    # def write(self, vals):
+    #     if not self._context.get('install_mode') and 'advanced_help' in vals:
+    #         raise UserError(_("Advanced help field must only be updated "
+    #                           "by install mode (not with the user interface"))
+    #     return super(ErpHelp, self).write(vals)
 
 
 class IrModel(models.Model):
@@ -63,6 +72,52 @@ class IrActionsActwindow(models.Model):
             model = rec.env['ir.model'].search([('model', '=', rec.res_model)])
             model.enduser_help = rec.enduser_help_model
             model.advanced_help = rec.advanced_help_model
+
+    @api.multi
+    def write(self, vals):
+        print '      ctx', self._context, vals
+        # import pdb; pdb.set_trace()
+        if self._context.get('install_mode'):
+            self._update_help_field(vals)
+    #     if self._context.get('unistall_mode'):
+    #         ''
+        return super(IrActionsActwindow, self).write(vals)
+
+    @api.multi
+    def _update_help_field(self, vals):
+        ''
+        module_name = self.module_being_update_or_insert()
+        for field in ['advanced_help']:
+            print 'RRRR', vals
+            # import pdb; pdb.set_trace()
+            if field not in vals:
+                continue
+        # for field in ['advanced_help', 'advanced_help_model']:
+            new_val_field = '<help_%s>%s</help_%s>' % (
+                            module_name, vals[field], module_name)
+            if vals.get(field):
+                vals[field] = new_val_field
+                # import pdb; pdb.set_trace()
+                if self[field]:
+                    # we search this string in field:
+                    # <help_mymodule> ... any content ... </help_mymodule>
+                    tag = getattr(
+                        BSHTML(self[field]), 'help_%s' % module_name)
+                    if tag:
+                        old_content = (
+                            tag.contents and tag.contents[1] or '')
+                        vals[field] = self[field].replace(
+                            old_content, new_val_field)
+                    else:
+                        vals[field] = '\n%s\n%s' % (
+                            self[field], new_val_field)
+
+    @api.model
+    def module_being_update_or_insert(self):
+        installed_modules = self.env['ir.module.module'].search(
+            [('state', '=', 'installed')])
+        tmp = self.env.registry._init_modules
+        return 'custom'
 
     @api.multi
     def open_help_popup(self):
