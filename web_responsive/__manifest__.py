@@ -11,6 +11,7 @@
     "author": "LasLabs, Tecnativa, Alexandre Díaz, "
               "Odoo Community Association (OCA)",
     "license": "LGPL-3",
+    "auto_install": True,
     "installable": True,
     "depends": [
         'web',

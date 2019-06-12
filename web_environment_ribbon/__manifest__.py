@@ -20,6 +20,6 @@
         'data/ribbon_data.xml',
         'view/base_view.xml',
         ],
-    "auto_install": False,
+    "auto_install": True,
     'installable': True
 }
