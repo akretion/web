@@ -1,7 +1,7 @@
 /* Copyright 2020 Tecnativa - João Marques
    License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl). */
 
-odoo.define("web_disable_export_group.tour", function(require) {
+odoo.define("web_disable_export_group.tour", function (require) {
     "use strict";
 
     var core = require("web.core");
@@ -17,6 +17,10 @@ odoo.define("web_disable_export_group.tour", function(require) {
                 "/web#model=ir.ui.view&view_type=list&cids=&action=base.action_ui_view",
         },
         [
+            {
+                content: "Check if 'Export all' button exists",
+                trigger: ".o_list_buttons:has(.o_list_export_xlsx)",
+            },
             {
                 content: "Select all records",
                 trigger: ".custom-control-input:first",
@@ -42,6 +46,10 @@ odoo.define("web_disable_export_group.tour", function(require) {
                 "/web#model=ir.ui.view&view_type=list&cids=&action=base.action_ui_view",
         },
         [
+            {
+                content: "Check if 'Export all' button exists",
+                trigger: ".o_list_buttons:not(:has(.o_list_export_xlsx))",
+            },
             {
                 content: "Select all records",
                 trigger: ".custom-control-input:first",
