@@ -22,6 +22,7 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
             "click .oe_timeline_button_scale_week": "_onScaleWeekClicked",
             "click .oe_timeline_button_scale_month": "_onScaleMonthClicked",
             "click .oe_timeline_button_scale_year": "_onScaleYearClicked",
+            "change .oe_timeline_date_input": "_onDateInputChanged",
         }),
 
         init: function (parent, state, params) {
@@ -147,6 +148,23 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
         },
 
         /**
+         * Set the timeline window to given day.
+         *
+         * @private
+         */
+        _onDateInputChanged: function (ev) {
+            const date = moment(ev.target.value);
+            this.current_window = {
+                start: date,
+                end: date.clone().add(24, "hours"),
+            };
+
+            if (this.timeline) {
+                this.timeline.setWindow(this.current_window);
+            }
+        },
+
+        /**
          * Scales the timeline window based on the current window.
          *
          * @param {Integer} factor The timespan (in hours) the window must be scaled to.
@@ -247,6 +265,7 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
             this.timeline.on("changed", () => {
                 this.draw_canvas();
             });
+            this.timeline.on("rangechanged", this.on_range_changed);
         },
 
         /**
@@ -528,6 +547,19 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
                     "onGroupClick"
                 );
             }
+        },
+
+        /**
+         * Handle a change in the timeline range.
+         *
+         * @param {RangeEvent} e
+         * @private
+         */
+        on_range_changed: function (e) {
+            const start = moment(e.start);
+            const end = moment(e.end);
+            const centerDate = start.add(end.diff(start) / 2);
+            this.$(".oe_timeline_date_input").val(centerDate.format("YYYY-MM-DD"));
         },
 
         /**

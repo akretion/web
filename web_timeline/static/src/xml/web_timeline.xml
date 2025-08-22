@@ -19,6 +19,7 @@
                     <button
                         class="btn btn-default oe_timeline_button_scale_year"
                     >Year</button>
+                    <input type="date" class="form-control oe_timeline_date_input" />
                 </div>
             </div>
             <div class="oe_timeline_widget" />
