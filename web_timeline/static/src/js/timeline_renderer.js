@@ -236,7 +236,7 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
             if (this.mode && this["on_scale_" + this.mode + "_clicked"]) {
                 this["on_scale_" + this.mode + "_clicked"]();
             }
-            this.timeline.on("click", this.on_group_click);
+            this.timeline.on("doubleClick", this.on_group_click);
             const group_bys = this.arch.attrs.default_group_by.split(",");
             this.last_group_bys = group_bys;
             this.last_domains = this.modelClass.data.domain;
@@ -381,25 +381,41 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
                 return events;
             }
             const groups = [];
-            groups.push({id: -1, content: _t("<b>UNASSIGNED</b>"), order: -1});
             var seq = 1;
             for (const evt of events) {
-                const group_name = evt[_.first(group_bys)];
-                if (group_name) {
-                    if (group_name instanceof Array) {
-                        const group = _.find(
-                            groups,
-                            (existing_group) => existing_group.id === group_name[0]
-                        );
-                        if (_.isUndefined(group)) {
-                            groups.push({
-                                id: group_name[0],
-                                content: group_name[1],
-                                order: seq,
-                            });
-                            seq += 1;
+                const parents = [];
+                for (let treeLevel = 0; treeLevel < group_bys.length; treeLevel++) {
+                    const group_by = group_bys[treeLevel];
+                    const [groupId, groupName] =
+                        evt[group_by] instanceof Array
+                            ? evt[group_by]
+                            : [-1, _t("<b>UNASSIGNED</b>")];
+                    const id = parents.concat(groupId).toString();
+                    const group = _.find(
+                        groups,
+                        (existing_group) => existing_group.id === id
+                    );
+                    if (_.isUndefined(group)) {
+                        groups.push({
+                            id,
+                            treeLevel,
+                            content: groupName,
+                            order: groupId !== -1 ? seq : -1,
+                        });
+                        if (parents.length) {
+                            const parent_group = _.find(
+                                groups,
+                                (existing_group) =>
+                                    existing_group.id === parents.toString()
+                            );
+                            if (!parent_group.nestedGroups) {
+                                parent_group.nestedGroups = [];
+                            }
+                            parent_group.nestedGroups.push(id);
                         }
+                        seq += 1;
                     }
+                    parents.push(groupId);
                 }
             }
             return groups;
@@ -456,12 +472,11 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
          */
         event_data_transform: function (evt) {
             const [date_start, date_stop] = this._get_event_dates(evt);
-            let group = evt[this.last_group_bys[0]];
-            if (group && group instanceof Array) {
-                group = _.first(group);
-            } else {
-                group = -1;
-            }
+            const group = this.last_group_bys.reduce((acc, group_by) => {
+                const value = evt[group_by];
+                const groupId = value && value instanceof Array ? value[0] : -1;
+                return acc.concat(groupId);
+            }, []).toString();
 
             for (const color of this.colors) {
                 if (py.eval(`'${evt[color.field]}' ${color.opt} '${color.value}'`)) {
@@ -519,14 +534,19 @@ odoo.define("web_timeline.TimelineRenderer", function (require) {
          * @private
          */
         on_group_click: function (e) {
-            if (e.what === "group-label" && e.group !== -1) {
-                this._trigger(
-                    e,
-                    () => {
-                        // Do nothing
-                    },
-                    "onGroupClick"
-                );
+            if (e.what === "group-label") {
+                const group = this.timeline.groupsData.get(e.group);
+                e.group = e.group.split(",")[group.treeLevel];
+                e.groupField = this.last_group_bys[group.treeLevel];
+                if (e.group != "-1") {
+                    this._trigger(
+                        e,
+                        () => {
+                            // Do nothing
+                        },
+                        "onGroupClick"
+                    );
+                }
             }
         },
 

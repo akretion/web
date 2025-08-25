@@ -55,12 +55,16 @@ odoo.define("web_timeline.TimelineView", function (require) {
                 "default_group_by",
                 "progress",
                 "date_delay",
-                attrs.default_group_by,
+                ...attrs.default_group_by.split(","),
             ];
 
             for (const field of fieldsToGather) {
                 if (attrs[field]) {
-                    fieldNames.push(attrs[field]);
+                    if (field === "default_group_by") {
+                        fieldNames.push(...attrs[field].split(","));
+                    } else {
+                        fieldNames.push(attrs[field]);
+                    }
                 }
             }
 

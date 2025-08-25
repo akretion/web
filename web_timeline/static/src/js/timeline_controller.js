@@ -88,11 +88,10 @@ odoo.define("web_timeline.TimelineController", function (require) {
          * @returns {jQuery.Deferred}
          */
         _onGroupClick: function (event) {
-            const groupField = this.renderer.last_group_bys[0];
             return this.do_action({
                 type: "ir.actions.act_window",
-                res_model: this.renderer.fields[groupField].relation,
-                res_id: event.data.item.group,
+                res_model: this.renderer.fields[event.data.item.groupField].relation,
+                res_id: parseInt(event.data.item.group, 10),
                 target: "new",
                 views: [[false, "form"]],
             });
