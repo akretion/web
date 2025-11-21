@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <t
+        t-name="web_concurrent_edit_warning.FormStatusIndicator"
+        t-inherit="web.FormStatusIndicator"
+        t-inherit-mode="extension"
+        owl="1"
+    >
+        <xpath
+            expr="//div[hasclass('o_form_status_indicator_buttons')]"
+            position="inside"
+        >
+            <button
+                type="button"
+                class="o_form_button_concurrent_edit_tooltip btn btn-danger py-0"
+                t-if="showConcurrentEditWarning"
+                t-on-click.stop="toggleConcurrentEditWarningPopover"
+                aria-label="Concurrent Edit Detected"
+                t-ref="concurrent_edit_warning_button"
+            >
+                <i class="fa fa-warning fa-fw" />
+            </button>
+        </xpath>
+        <xpath
+            expr="//div[hasclass('o_form_status_indicator_buttons')]"
+            position="before"
+        >
+            <span
+                t-if="remoteDirty and !showConcurrentEditWarning and !(props.model.root.isVirtual or displayButtons)"
+                class="text-muted small ms-2"
+                data-tooltip="This record is being edited in another tab"
+            >
+                <i class="fa fa-users fa-fw" />
+            </span>
+        </xpath>
+    </t>
+
+    <t t-name="web_concurrent_edit_warning.ConcurrentEditWarningPopover" owl="1">
+        <div class="o-tooltip o-concurrent_edit_warning_tooltip">
+            <header>
+                <h3 class="o_popover_header">
+                    Concurrent Edit Detected!
+                </h3>
+                <aside>
+                    <button
+                        type="button"
+                        class="btn"
+                        aria-label="Refresh"
+                        t-on-click="props.refreshConcurrentEditRemotes"
+                    >
+                        <i class="fa fa-refresh" aria-hidden="true" />
+                    </button>
+                    <button
+                        type="button"
+                        class="btn"
+                        aria-label="Close"
+                        t-on-click="props.onClose"
+                    >
+                        <i class="fa fa-times" aria-hidden="true" />
+                    </button>
+                </aside>
+            </header>
+            <div class="popover-body">
+                <p>
+                    This record is already being edited in <t
+                        t-esc="props.userCount"
+                    /> other browser tab<span t-if="props.userCount &gt; 1">s</span>.
+                </p>
+                <p>
+                    It is recommended to discard your changes here and continue editing in the other tab to avoid overwriting data.
+                </p>
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    t-on-click="props.discardChanges"
+                >
+                    <i class="fa fa-undo" aria-hidden="true" />
+                    Discard Local Changes
+                </button>
+            </div>
+        </div>
+    </t>
+
+</templates>
