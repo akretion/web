@@ -7,7 +7,6 @@ import threading
 from weakref import WeakSet
 
 from odoo import http
-
 from odoo.addons.bus.websocket import WebsocketConnectionHandler
 
 
@@ -42,7 +41,7 @@ class BroadcastChannel(http.Controller):
     @http.route(
         "/websocket/broadcast_channel",
         type="http",
-        auth="user",
+        auth="public",
         csrf=False,
         websocket=True,
     )
