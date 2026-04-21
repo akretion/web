@@ -129,6 +129,23 @@ export class TimelineRenderer extends Component {
     }
 
     /**
+     * Set the timeline window to given day.
+     *
+     * @private
+     */
+    _onDateInputChanged(ev) {
+        const date = luxon.DateTime.fromISO(ev.target.value);
+        this.current_window = {
+            start: date.toJSDate(),
+            end: date.plus({hours: 24}).toJSDate(),
+        };
+
+        if (this.timeline) {
+            this.timeline.setWindow(this.current_window);
+        }
+    }
+
+    /**
      * Scales the timeline window based on the current window.
      *
      * @param {Function} getHoursFromStart Function which returns the timespan
@@ -757,6 +774,22 @@ export class TimelineRenderer extends Component {
     on_range_changed() {
         if (this.params.show_only_active_groups) {
             this._adjust_group_visibility();
+        }
+    }
+
+    /**
+     * Handle a change in the timeline range.
+     *
+     * @param {RangeEvent} e
+     * @private
+     */
+    on_range_changed(e) {
+        const start = luxon.DateTime.fromJSDate(e.start);
+        const end = luxon.DateTime.fromJSDate(e.end);
+        const centerDate = start.plus({seconds: end.diff(start).as("seconds") / 2});
+        if (this.rootRef.el) {
+            this.rootRef.el.querySelector(".oe_timeline_date_input").value =
+                centerDate.toFormat("yyyy-MM-dd");
         }
     }
 
