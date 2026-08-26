@@ -771,19 +771,10 @@ export class TimelineRenderer extends Component {
      * @param {RangeEvent} e
      * @private
      */
-    on_range_changed() {
+    on_range_changed(e) {
         if (this.params.show_only_active_groups) {
             this._adjust_group_visibility();
         }
-    }
-
-    /**
-     * Handle a change in the timeline range.
-     *
-     * @param {RangeEvent} e
-     * @private
-     */
-    on_range_changed(e) {
         const start = luxon.DateTime.fromJSDate(e.start);
         const end = luxon.DateTime.fromJSDate(e.end);
         const centerDate = start.plus({seconds: end.diff(start).as("seconds") / 2});
