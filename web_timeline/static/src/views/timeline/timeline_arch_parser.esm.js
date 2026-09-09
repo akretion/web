@@ -95,6 +95,15 @@ export class TimelineArchParser {
                             );
                         }
                     }
+                    if (node.hasAttribute("time_pagination")) {
+                        archInfo.time_pagination = exprToBoolean(
+                            node.getAttribute("time_pagination")
+                        );
+                    }
+                    if (node.hasAttribute("time_pagination_margin")) {
+                        archInfo.time_pagination_margin =
+                            node.getAttribute("time_pagination_margin") || "10%";
+                    }
                     if (node.hasAttribute("event_open_popup")) {
                         archInfo.open_popup_action = exprToBoolean(
                             node.getAttribute("event_open_popup")

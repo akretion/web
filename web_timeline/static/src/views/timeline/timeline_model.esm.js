@@ -12,7 +12,7 @@ import {registry} from "@web/core/registry";
 import {renderToString} from "@web/core/utils/render";
 import {useViewCompiler} from "@web/views/view_compiler";
 
-const {DateTime} = luxon;
+const {DateTime, Duration} = luxon;
 const parsers = registry.category("parsers");
 const formatters = registry.category("formatters");
 
@@ -25,9 +25,12 @@ export class TimelineModel extends Model {
         this.date_stop = this.params.date_stop;
         this.date_delay = this.params.date_delay;
         this.colors = this.params.colors;
+        this.time_pagination = this.params.time_pagination;
+        this.time_pagination_margin = this.params.time_pagination_margin;
         this.last_group_bys = this.params.default_group_by.split(",");
         const templates = useViewCompiler(KanbanCompiler, this.params.templateDocs);
         this.recordTemplate = templates["timeline-item"];
+        this.current_window = this._compute_window_from_mode(this.params.mode);
 
         this.keepLast = new KeepLast();
         onWillStart(async () => {
@@ -48,6 +51,43 @@ export class TimelineModel extends Model {
             );
         });
     }
+    /**
+     * Computes the initial visible window.
+     *
+     * @private
+     */
+    _compute_window_from_mode(mode) {
+        const current_date = DateTime.now();
+        switch (mode) {
+            case "day":
+                return {
+                    start: current_date.startOf("day"),
+                    end: current_date.endOf("day"),
+                };
+            case "week":
+                return {
+                    start: current_date.startOf("week"),
+                    end: current_date.endOf("week"),
+                };
+            case "month":
+                return {
+                    start: current_date.startOf("month"),
+                    end: current_date.endOf("month"),
+                };
+            default:
+                return;
+        }
+    }
+
+    /**
+     * Sets the current window to the given start and end dates.
+     *
+     * @private
+     */
+    async _set_current_window(start, end) {
+        this.current_window = {start, end};
+    }
+
     /**
      * Read the records for the timeline.
      * @param {Object} searchParams
@@ -80,10 +120,27 @@ export class TimelineModel extends Model {
             .map((g) => (g.includes(":") ? g.split(":")[0] : g).trim())
             .filter((g) => this.fields[g] && this.fields[g].type !== "many2many")
             .join(",");
+        let domain = searchParams.domain;
+        if (this.time_pagination) {
+            let offshoot;
+            if (this.time_pagination_margin.endsWith("%")) {
+                const span = this.current_window.end.diff(this.current_window.start);
+                offshoot = Duration.fromMillis(span.milliseconds * margin);
+            } else {
+                offshoot = Duration.fromObject(JSON.parse(this.time_pagination_margin));
+            }
+            domain = [
+                "&",
+                "&",
+                [this.date_stop, ">", this.current_window.start.minus(offshoot)],
+                [this.date_start, "<", this.current_window.end.plus(offshoot)],
+                ...domain,
+            ];
+        }
         this.data = await this.keepLast.add(
             this.orm.call(this.model_name, "search_read", [], {
                 fields: fields,
-                domain: searchParams.domain,
+                domain: domain,
                 order: order,
                 context: searchParams.context,
             })
