@@ -150,31 +150,13 @@ export class TimelineRenderer extends Component {
      * @private
      */
     _computeMode() {
-        if (this.mode.data) {
-            let start = false,
-                end = false;
-            const current_date = DateTime.now();
-            switch (this.mode.data) {
-                case "day":
-                    start = current_date.startOf("day");
-                    end = current_date.endOf("day");
-                    break;
-                case "week":
-                    start = current_date.startOf("week");
-                    end = current_date.endOf("week");
-                    break;
-                case "month":
-                    start = current_date.startOf("month");
-                    end = current_date.endOf("month");
-                    break;
-            }
-            if (end && start) {
-                this.options.start = start.toJSDate();
-                this.options.end = end.toJSDate();
-            } else {
-                this.mode.data = "fit";
-            }
+        const {start, end} = this.model._compute_window_from_mode(this.mode.data);
+        if (end && start) {
+            this.options.start = start.toJSDate();
+            this.options.end = end.toJSDate();
+            return;
         }
+        this.mode.data = "fit";
     }
 
     /**
@@ -230,6 +212,7 @@ export class TimelineRenderer extends Component {
             this.draw_canvas();
             this.load_initial_data();
         });
+        this.timeline.on("rangechanged", this.on_range_changed.bind(this));
     }
     /**
      * Returns the XSS whitelist for the timeline library.
@@ -407,6 +390,16 @@ export class TimelineRenderer extends Component {
             groups.push({id: record_info[0].id, content: record_info[0].display_name});
         }
         return groups;
+    }
+
+    /**
+     * Handle a change in the timeline range.
+     *
+     * @param {RangeEvent} e
+     * @private
+     */
+    on_range_changed(e) {
+        this.props.onRangeChanged(e);
     }
 
     /**

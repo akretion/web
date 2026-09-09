@@ -47,11 +47,25 @@ export class TimelineController extends Component {
             onMove: this._onMove.bind(this),
             onRemove: this._onRemove.bind(this),
             onUpdate: this._onUpdate.bind(this),
+            onRangeChanged: this._onRangeChanged.bind(this),
         };
     }
     getSearchProps() {
         const {comparision, context, domain, groupBy, orderBy} = this.env.searchModel;
         return {comparision, context, domain, groupBy, orderBy};
+    }
+    /**
+     * Handles the range change event from the TimelineRenderer.
+     */
+    async _onRangeChanged(e) {
+        this.model._set_current_window(
+            DateTime.fromJSDate(e.start),
+            DateTime.fromJSDate(e.end)
+        );
+        if (this.model.time_pagination) {
+            await this.model.load(this.getSearchProps());
+            this.render();
+        }
     }
     /**
      * Gets triggered when a group in the timeline is
