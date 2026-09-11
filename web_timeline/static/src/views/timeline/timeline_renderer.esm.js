@@ -754,6 +754,7 @@ export class TimelineRenderer extends Component {
      * @private
      */
     on_range_changed(e) {
+        this.props.onRangeChanged(e);
         if (this.params.show_only_active_groups) {
             this._adjust_group_visibility();
         }
@@ -764,16 +765,6 @@ export class TimelineRenderer extends Component {
             this.rootRef.el.querySelector(".oe_timeline_date_input").value =
                 centerDate.toFormat("yyyy-MM-dd");
         }
-    }
-
-    /**
-     * Handle a change in the timeline range.
-     *
-     * @param {RangeEvent} e
-     * @private
-     */
-    on_range_changed(e) {
-        this.props.onRangeChanged(e);
     }
 
     /**
