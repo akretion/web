@@ -3,6 +3,7 @@
  * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
  */
 import {serializeDate, serializeDateTime} from "@web/core/l10n/dates";
+import {Domain} from "@web/core/domain";
 import {KanbanCompiler} from "@web/views/kanban/kanban_compiler";
 import {KeepLast} from "@web/core/utils/concurrency";
 import {Model} from "@web/model/model";
@@ -117,13 +118,31 @@ export class TimelineModel extends Model {
             } else {
                 offshoot = Duration.fromObject(JSON.parse(this.time_pagination_margin));
             }
-            domain = [
-                "&",
-                "&",
-                [this.date_stop, ">", this.current_window.start.minus(offshoot)],
-                [this.date_start, "<", this.current_window.end.plus(offshoot)],
-                ...domain,
-            ];
+            domain = Domain.and([
+                domain || [],
+                Domain.and([
+                    [
+                        [
+                            this.date_stop,
+                            ">",
+                            this.serializeDate(
+                                this.date_stop,
+                                this.current_window.start.minus(offshoot)
+                            ),
+                        ],
+                    ],
+                    [
+                        [
+                            this.date_start,
+                            "<",
+                            this.serializeDate(
+                                this.date_start,
+                                this.current_window.end.plus(offshoot)
+                            ),
+                        ],
+                    ],
+                ]),
+            ]).toList();
         }
         this.data = await this.keepLast.add(
             this.orm.call(this.model_name, "search_read", [], {
