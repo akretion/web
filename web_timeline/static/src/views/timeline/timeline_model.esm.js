@@ -83,10 +83,19 @@ export class TimelineModel extends Model {
     /**
      * Sets the current window to the given start and end dates.
      *
+     * Returns true if the window was updated, false otherwise.
+     *
      * @private
      */
-    async _set_current_window(start, end) {
-        this.current_window = {start, end};
+    _set_current_window(start, end) {
+        if (
+            !start.equals(this.current_window.start) ||
+            !end.equals(this.current_window.end)
+        ) {
+            this.current_window = {start, end};
+            return true;
+        }
+        return false;
     }
 
     /**
