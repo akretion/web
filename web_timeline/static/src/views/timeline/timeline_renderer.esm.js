@@ -845,4 +845,5 @@ TimelineRenderer.props = {
     onMove: Function,
     onRemove: Function,
     onUpdate: Function,
+    onRangeChanged: Function,
 };
