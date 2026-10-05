@@ -28,6 +28,7 @@ export class TimelineModel extends Model {
         this.colors = this.params.colors;
         this.time_pagination = this.params.time_pagination;
         this.time_pagination_margin = this.params.time_pagination_margin;
+        this.time_pagination_tolerance = this.params.time_pagination_tolerance;
         this.last_group_bys = this.params.default_group_by.split(",");
         const templates = useViewCompiler(KanbanCompiler, this.params.templateDocs);
         this.recordTemplate = templates["timeline-item"];
@@ -88,14 +89,15 @@ export class TimelineModel extends Model {
      * @private
      */
     _set_current_window(start, end) {
-        if (
-            !start.equals(this.current_window.start) ||
-            !end.equals(this.current_window.end)
-        ) {
-            this.current_window = {start, end};
-            return true;
-        }
-        return false;
+        this.current_window = {start, end};
+    }
+
+    _should_paginate() {
+        return (
+            !this._last_pagination_tolerance ||
+            this.current_window.start < this._last_pagination_tolerance.start ||
+            this.current_window.end > this._last_pagination_tolerance.end
+        );
     }
 
     /**
@@ -132,36 +134,32 @@ export class TimelineModel extends Model {
             .join(",");
         let domain = searchParams.domain;
         if (this.time_pagination) {
-            let offshoot;
+            let offshoot = 0;
             if (this.time_pagination_margin.endsWith("%")) {
                 const span = this.current_window.end.diff(this.current_window.start);
-                offshoot = Duration.fromMillis(span.milliseconds * margin);
+                offshoot = Duration.fromMillis(
+                    span.milliseconds * this.time_pagination_margin
+                );
             } else {
                 offshoot = Duration.fromObject(JSON.parse(this.time_pagination_margin));
             }
+            const tolerance = this.time_pagination_tolerance
+                ? parseFloat(this.time_pagination_tolerance, 10)
+                : 2;
+
+            this._last_pagination_tolerance = {
+                start: this.current_window.start.minus(offshoot / tolerance),
+                end: this.current_window.end.plus(offshoot / tolerance),
+            };
+
+            const start = this.current_window.start.minus(offshoot);
+            const end = this.current_window.end.plus(offshoot);
+
             domain = Domain.and([
                 domain || [],
                 Domain.and([
-                    [
-                        [
-                            this.date_stop,
-                            ">",
-                            this.serializeDate(
-                                this.date_stop,
-                                this.current_window.start.minus(offshoot)
-                            ),
-                        ],
-                    ],
-                    [
-                        [
-                            this.date_start,
-                            "<",
-                            this.serializeDate(
-                                this.date_start,
-                                this.current_window.end.plus(offshoot)
-                            ),
-                        ],
-                    ],
+                    [[this.date_stop, ">", this.serializeDate(this.date_stop, start)]],
+                    [[this.date_start, "<", this.serializeDate(this.date_start, end)]],
                 ]),
             ]).toList();
         }

@@ -104,6 +104,11 @@ export class TimelineArchParser {
                         archInfo.time_pagination_margin =
                             node.getAttribute("time_pagination_margin") || "10%";
                     }
+                    if (node.hasAttribute("time_pagination_tolerance")) {
+                        archInfo.time_pagination_tolerance = node.getAttribute(
+                            "time_pagination_tolerance"
+                        );
+                    }
                     if (node.hasAttribute("event_open_popup")) {
                         archInfo.open_popup_action = exprToBoolean(
                             node.getAttribute("event_open_popup")

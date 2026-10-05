@@ -58,16 +58,13 @@ export class TimelineController extends Component {
      * Handles the range change event from the TimelineRenderer.
      */
     async _onRangeChanged(e) {
-        if (
-            this.model._set_current_window(
-                DateTime.fromJSDate(e.start),
-                DateTime.fromJSDate(e.end)
-            )
-        ) {
-            if (this.model.time_pagination) {
-                await this.model.load(this.getSearchProps());
-                this.render();
-            }
+        this.model._set_current_window(
+            DateTime.fromJSDate(e.start),
+            DateTime.fromJSDate(e.end)
+        );
+        if (this.model.time_pagination && this.model._should_paginate()) {
+            await this.model.load(this.getSearchProps());
+            this.render();
         }
     }
     /**
